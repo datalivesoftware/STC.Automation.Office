@@ -1,20 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
-using System.Linq;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
-using Excel = STC.Automation.Office.Excel;
-using Word = STC.Automation.Office.Word;
-using ADODB = STC.Automation.Office.ADODB;
-using System.Reflection;
-using System.IO;
-using System.Data.SqlClient;
 using STC.Automation.Office.Core;
 using STC.Automation.Office.Excel.Utilities;
 using STC.Automation.Office.Outlook;
+using ADODB = STC.Automation.Office.ADODB;
+using Excel = STC.Automation.Office.Excel;
+using Word = STC.Automation.Office.Word;
 
 namespace Tester
 {
@@ -27,118 +24,120 @@ namespace Tester
 
         private void btnNewExcel_Click(object sender, EventArgs e)
         {
-            ADODB.Recordset rs = new ADODB.Recordset();
-            rs.Fields.Append("A", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Fields.Append("B", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Fields.Append("C", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Open();
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A1", "B2", "C3" });
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A4", "B5", "C6" });
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A7", "B8", "C9" });
-
-            // Excel
-            using (var excel = new Excel.Application())
+            using (ADODB.Recordset rs = new ADODB.Recordset())
             {
-                excel.NewWorkbook += new STC.Automation.Office.Excel.Events.NewWorkbookEventHandler(excel_NewWorkbook);
+                rs.Fields.Append("A", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Fields.Append("B", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Fields.Append("C", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Open();
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A1", "B2", "C3" });
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A4", "B5", "C6" });
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A7", "B8", "C9" });
 
-                excel.Visible = true;
-                
-                MessageBox.Show("Version: " + excel.Version.ToString());
-                
-                using (var workbook = (sender == btnNewExcel) ?
-                    excel.Workbooks.Add() :
-                    excel.Workbooks.Open(Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetModules()[0].FullyQualifiedName) + "\\Templates\\Open Tester.xls"))
+                // Excel
+                using (var excel = new Excel.Application())
                 {
-                    using (var worksheet = workbook.ActiveSheet)
+                    excel.NewWorkbook += new STC.Automation.Office.Excel.Events.NewWorkbookEventHandler(excel_NewWorkbook);
+
+                    excel.Visible = true;
+
+                    MessageBox.Show("Version: " + excel.Version.ToString());
+
+                    using (var workbook = (sender == btnNewExcel) ?
+                        excel.Workbooks.Add() :
+                        excel.Workbooks.Open(Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetModules()[0].FullyQualifiedName) + "\\Templates\\Open Tester.xls"))
                     {
-                        using (var range = worksheet.Cells)
+                        using (var worksheet = workbook.ActiveSheet)
                         {
-                            (range[1, 1]).Value = "Test";
-                        }
-
-                        using (var range = worksheet.Range("A2"))
-                        {
-                            range.CopyFromRecordset(rs.InternalObject, null, null);
-                        }
-
-                        using (var range = worksheet.Range("A2:B3"))
-                        {
-                            range.Font.Bold = true;
-                            range.Font.Color = Color.Teal;
-                            range.Font.Italic = true;
-                        }
-
-                        using (var range = worksheet.Range("D2:G10"))
-                        {
-                            string imgPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"Resources\Koala.jpg");
-                            Image img = null;
-                            try
+                            using (var range = worksheet.Cells)
                             {
-                                img = Image.FromFile(imgPath);
+                                (range[1, 1]).Value = "Test";
                             }
-                            catch { }
-                            //worksheet.Shapes.AddPicture(img, range, true, true).Dispose();
 
-                            if (img != null)
+                            using (var range = worksheet.Range("A2"))
                             {
-                                using (var shape = worksheet.Shapes.AddPicture(imgPath, false, true, range, true))
-                                {
-                                    MessageBox.Show(shape.Name);
+                                range.CopyFromRecordset(rs.InternalObject, null, null);
+                            }
 
-                                    worksheet.Hyperlinks.Add(shape, "http://www.google.com/").Dispose();
+                            using (var range = worksheet.Range("A2:B3"))
+                            {
+                                range.Font.Bold = true;
+                                range.Font.Color = Color.Teal;
+                                range.Font.Italic = true;
+                            }
+
+                            using (var range = worksheet.Range("D2:G10"))
+                            {
+                                string imgPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"Resources\Koala.jpg");
+                                Image img = null;
+                                try
+                                {
+                                    img = Image.FromFile(imgPath);
+                                }
+                                catch { }
+                                //worksheet.Shapes.AddPicture(img, range, true, true).Dispose();
+
+                                if (img != null)
+                                {
+                                    using (var shape = worksheet.Shapes.AddPicture(imgPath, false, true, range, true))
+                                    {
+                                        MessageBox.Show(shape.Name);
+
+                                        worksheet.Hyperlinks.Add(shape, "http://www.google.com/").Dispose();
+                                    }
+                                }
+                            }
+
+                            using (var range = worksheet.Range("B2"))
+                            {
+                                range.AddComment("A comment on cell B2");
+                                worksheet.Hyperlinks.Add(range, "http://lmgtfy.com/?q=excel+automation", screenTip: "Let Me Google That For You", textToDisplay: "LMGTFY").Dispose();
+                            }
+
+                            using (var range = worksheet.Range("B2"))
+                            {
+                                if (range.Comment != null)
+                                    range.Comment.Text(" - New text", 20, false);
+                            }
+
+                            using (var range = worksheet.Range("B3"))
+                            {
+                                if (range.Comment == null)
+                                    range.AddComment("Another text");
+
+                                if (range.Comment == null)
+                                    range.AddComment("This should never be seen");
+                            }
+
+                            using (var range = worksheet.Range("C2"))
+                            {
+                                using (var interior = range.Interior)
+                                {
+                                    interior.Color = Color.IndianRed;
+                                    range.AddComment(interior.Color.ToString());
                                 }
                             }
                         }
 
-                        using (var range = worksheet.Range("B2"))
+                        using (var testWorksheet = workbook.Worksheets.Add() as STC.Automation.Office.Excel.Worksheet)
                         {
-                            range.AddComment("A comment on cell B2");
-                            worksheet.Hyperlinks.Add(range, "http://lmgtfy.com/?q=excel+automation", screenTip: "Let Me Google That For You", textToDisplay: "LMGTFY").Dispose();
-                        }
-
-                        using (var range = worksheet.Range("B2"))
-                        {
-                            if (range.Comment != null)
-                                range.Comment.Text(" - New text", 20, false);
-                        }
-
-                        using (var range = worksheet.Range("B3"))
-                        {
-                            if (range.Comment == null)
-                                range.AddComment("Another text");
-
-                            if (range.Comment == null)
-                                range.AddComment("This should never be seen");
-                        }
-
-                        using (var range = worksheet.Range("C2"))
-                        {
-                            using (var interior = range.Interior)
+                            testWorksheet.Name = "Programmatic Worksheet";
+                            using (var range = testWorksheet.Cells)
                             {
-                                interior.Color = Color.IndianRed;
-                                range.AddComment(interior.Color.ToString());
+                                range[1, 1].Value = "Worksheet #2";
+                            }
+
+                            using (var chart = workbook.Sheets.Add(testWorksheet, type: Excel.Enums.SheetType.Chart) as STC.Automation.Office.Excel.Chart)
+                            {
+                                chart.Name = "Programmatic Chart";
                             }
                         }
+
+                        //workbook.Close();
                     }
 
-                    using (var testWorksheet = workbook.Worksheets.Add() as STC.Automation.Office.Excel.Worksheet)
-                    {
-                        testWorksheet.Name = "Programmatic Worksheet";
-                        using (var range = testWorksheet.Cells)
-                        {
-                            range[1, 1].Value = "Worksheet #2";
-                        }
-
-                        using (var chart = workbook.Sheets.Add(testWorksheet, type: Excel.Enums.SheetType.Chart) as STC.Automation.Office.Excel.Chart)
-                        {
-                            chart.Name = "Programmatic Chart";
-                        }
-                    }
-
-                    //workbook.Close();
+                    //excel.Quit();
                 }
-
-                //excel.Quit();
             }
 
             //Microsoft.Office.Interop.Excel.ApplicationClass excel = new Microsoft.Office.Interop.Excel.ApplicationClass();
@@ -157,149 +156,151 @@ namespace Tester
         private void ExcelToPdfButton_Click(object sender, EventArgs e)
         {
             // Copy and paste job from btnNewExcel_Click
-            ADODB.Recordset rs = new ADODB.Recordset();
-            rs.Fields.Append("A", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Fields.Append("B", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Fields.Append("C", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Open();
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A1", "B2", "C3" });
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A4", "B5", "C6" });
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A7", "B8", "C9" });
-
-            // Excel
-            using (var excel = new Excel.Application())
+            using (ADODB.Recordset rs = new ADODB.Recordset())
             {
-                excel.NewWorkbook += new STC.Automation.Office.Excel.Events.NewWorkbookEventHandler(excel_NewWorkbook);
+                rs.Fields.Append("A", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Fields.Append("B", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Fields.Append("C", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Open();
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A1", "B2", "C3" });
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A4", "B5", "C6" });
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A7", "B8", "C9" });
 
-                excel.Visible = true;
-                excel.ScreenUpdating = false;
-                excel.DisplayAlerts = false;
-
-                MessageBox.Show("Version: " + excel.Version.ToString());
-
-                using (var workbook = (sender == btnNewExcel) ?
-                    excel.Workbooks.Add() :
-                    excel.Workbooks.Open(Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetModules()[0].FullyQualifiedName) + "\\Templates\\Open Tester.xls"))
+                // Excel
+                using (var excel = new Excel.Application())
                 {
-                    using (var worksheet = workbook.ActiveSheet)
+                    excel.NewWorkbook += new STC.Automation.Office.Excel.Events.NewWorkbookEventHandler(excel_NewWorkbook);
+
+                    excel.Visible = true;
+                    excel.ScreenUpdating = false;
+                    excel.DisplayAlerts = false;
+
+                    MessageBox.Show("Version: " + excel.Version.ToString());
+
+                    using (var workbook = (sender == btnNewExcel) ?
+                        excel.Workbooks.Add() :
+                        excel.Workbooks.Open(Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetModules()[0].FullyQualifiedName) + "\\Templates\\Open Tester.xls"))
                     {
-                        using (var range = worksheet.Cells)
+                        using (var worksheet = workbook.ActiveSheet)
                         {
-                            (range[1, 1]).Value = "Test";
-                        }
-
-                        using (var range = worksheet.Range("A2"))
-                        {
-                            range.CopyFromRecordset(rs.InternalObject, null, null);
-                        }
-
-                        using (var range = worksheet.Range("A2:B3"))
-                        {
-                            range.Font.Bold = true;
-                            range.Font.Color = Color.Teal;
-                            range.Font.Italic = true;
-                        }
-
-                        using (var range = worksheet.Range("D2:G10"))
-                        {
-                            string imgPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"Resources\Koala.jpg");
-                            Image img = null;
-                            try
+                            using (var range = worksheet.Cells)
                             {
-                                img = Image.FromFile(imgPath);
+                                (range[1, 1]).Value = "Test";
                             }
-                            catch { }
-                            //worksheet.Shapes.AddPicture(img, range, true, true).Dispose();
 
-                            if (img != null)
+                            using (var range = worksheet.Range("A2"))
                             {
-                                using (var shape = worksheet.Shapes.AddPicture(imgPath, false, true, range, true))
-                                {
-                                    MessageBox.Show(shape.Name);
+                                range.CopyFromRecordset(rs.InternalObject, null, null);
+                            }
 
-                                    worksheet.Hyperlinks.Add(shape, "http://www.google.com/").Dispose();
+                            using (var range = worksheet.Range("A2:B3"))
+                            {
+                                range.Font.Bold = true;
+                                range.Font.Color = Color.Teal;
+                                range.Font.Italic = true;
+                            }
+
+                            using (var range = worksheet.Range("D2:G10"))
+                            {
+                                string imgPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), @"Resources\Koala.jpg");
+                                Image img = null;
+                                try
+                                {
+                                    img = Image.FromFile(imgPath);
+                                }
+                                catch { }
+                                //worksheet.Shapes.AddPicture(img, range, true, true).Dispose();
+
+                                if (img != null)
+                                {
+                                    using (var shape = worksheet.Shapes.AddPicture(imgPath, false, true, range, true))
+                                    {
+                                        MessageBox.Show(shape.Name);
+
+                                        worksheet.Hyperlinks.Add(shape, "http://www.google.com/").Dispose();
+                                    }
+                                }
+                            }
+
+                            using (var range = worksheet.Range("B2"))
+                            {
+                                range.AddComment("A comment on cell B2");
+                                worksheet.Hyperlinks.Add(range, "http://lmgtfy.com/?q=excel+automation", screenTip: "Let Me Google That For You", textToDisplay: "LMGTFY").Dispose();
+                            }
+
+                            using (var range = worksheet.Range("B2"))
+                            {
+                                if (range.Comment != null)
+                                    range.Comment.Text(" - New text", 20, false);
+                            }
+
+                            using (var range = worksheet.Range("B3"))
+                            {
+                                if (range.Comment == null)
+                                    range.AddComment("Another text");
+
+                                if (range.Comment == null)
+                                    range.AddComment("This should never be seen");
+                            }
+
+                            using (var range = worksheet.Range("C2"))
+                            {
+                                using (var interior = range.Interior)
+                                {
+                                    interior.Color = Color.IndianRed;
+                                    range.AddComment(interior.Color.ToString());
                                 }
                             }
                         }
 
-                        using (var range = worksheet.Range("B2"))
+                        using (var testWorksheet = workbook.Worksheets.Add() as STC.Automation.Office.Excel.Worksheet)
                         {
-                            range.AddComment("A comment on cell B2");
-                            worksheet.Hyperlinks.Add(range, "http://lmgtfy.com/?q=excel+automation", screenTip: "Let Me Google That For You", textToDisplay: "LMGTFY").Dispose();
-                        }
-
-                        using (var range = worksheet.Range("B2"))
-                        {
-                            if (range.Comment != null)
-                                range.Comment.Text(" - New text", 20, false);
-                        }
-
-                        using (var range = worksheet.Range("B3"))
-                        {
-                            if (range.Comment == null)
-                                range.AddComment("Another text");
-
-                            if (range.Comment == null)
-                                range.AddComment("This should never be seen");
-                        }
-
-                        using (var range = worksheet.Range("C2"))
-                        {
-                            using (var interior = range.Interior)
+                            testWorksheet.Name = "Programmatic Worksheet";
+                            using (var range = testWorksheet.Cells)
                             {
-                                interior.Color = Color.IndianRed;
-                                range.AddComment(interior.Color.ToString());
+                                range[1, 1].Value = "Worksheet #2";
+                            }
+
+                            using (var chart = workbook.Sheets.Add(testWorksheet, type: Excel.Enums.SheetType.Chart) as STC.Automation.Office.Excel.Chart)
+                            {
+                                chart.Name = "Programmatic Chart";
                             }
                         }
-                    }
 
-                    using (var testWorksheet = workbook.Worksheets.Add() as STC.Automation.Office.Excel.Worksheet)
-                    {
-                        testWorksheet.Name = "Programmatic Worksheet";
-                        using (var range = testWorksheet.Cells)
+                        // Code stolen from http://stackoverflow.com/a/7401831/23401
+                        var exportSuccessful = true;
+                        var outputPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\test.pdf";
+                        try
                         {
-                            range[1, 1].Value = "Worksheet #2";
+                            // Call Excel's native export function (valid in Office 2007 and Office 2010, AFAIK)
+                            workbook.ExportAsFixedFormat(Excel.Enums.FixedFormatType.TypePDF, outputPath);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            // Mark the export as failed for the return value...
+                            exportSuccessful = false;
+
+                            // Do something with any exceptions here, if you wish...
+                            // MessageBox.Show...        
                         }
 
-                        using (var chart = workbook.Sheets.Add(testWorksheet, type: Excel.Enums.SheetType.Chart) as STC.Automation.Office.Excel.Chart)
+                        // You can use the following method to automatically open the PDF after export if you wish
+                        // Make sure that the file actually exists first...
+                        if (System.IO.File.Exists(outputPath))
                         {
-                            chart.Name = "Programmatic Chart";
+                            System.Diagnostics.Process.Start(outputPath);
                         }
+
+                        if (!exportSuccessful)
+                        {
+                            MessageBox.Show("Uh oh. Something went wrong", "Excel to pdf");
+                        }
+
+                        //workbook.Close();
                     }
 
-                    // Code stolen from http://stackoverflow.com/a/7401831/23401
-                    var exportSuccessful = true;
-                    var outputPath = $@"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\test.pdf";
-                    try
-                    {
-                        // Call Excel's native export function (valid in Office 2007 and Office 2010, AFAIK)
-                        workbook.ExportAsFixedFormat(Excel.Enums.FixedFormatType.TypePDF, outputPath);
-                    }
-                    catch (System.Exception ex)
-                    {
-                        // Mark the export as failed for the return value...
-                        exportSuccessful = false;
-
-                        // Do something with any exceptions here, if you wish...
-                        // MessageBox.Show...        
-                    }
-
-                    // You can use the following method to automatically open the PDF after export if you wish
-                    // Make sure that the file actually exists first...
-                    if (System.IO.File.Exists(outputPath))
-                    {
-                        System.Diagnostics.Process.Start(outputPath);
-                    }
-
-                    if (!exportSuccessful )
-                    {
-                        MessageBox.Show("Uh oh. Something went wrong", "Excel to pdf");
-                    }
-
-                    //workbook.Close();
+                    //excel.Quit();
                 }
-
-                //excel.Quit();
             }
 
             //Microsoft.Office.Interop.Excel.ApplicationClass excel = new Microsoft.Office.Interop.Excel.ApplicationClass();
@@ -317,62 +318,64 @@ namespace Tester
 
         void excel_NewWorkbook(STC.Automation.Office.Excel.Workbook workbook)
         {
-            
+
         }
 
         private void btnExcelByProcess_Click(object sender, EventArgs e)
         {
-            ADODB.Recordset rs = new ADODB.Recordset();
-            rs.Fields.Append("A", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Fields.Append("B", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Fields.Append("C", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
-            rs.Open();
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A1", "B2", "C3" });
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A4", "B5", "C6" });
-            rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A7", "B8", "C9" });
-
-            // Excel
-            using (var excel = Excel.Application.FromProcess(System.Diagnostics.Process.GetProcessesByName("EXCEL")[0]))
+            using (ADODB.Recordset rs = new ADODB.Recordset())
             {
-                if (excel == null)
-                {
-                    MessageBox.Show("No existing running instance of Excel found.");
-                    return;
-                }
+                rs.Fields.Append("A", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Fields.Append("B", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Fields.Append("C", STC.Automation.Office.ADODB.Enums.DataType.VarWChar, 100);
+                rs.Open();
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A1", "B2", "C3" });
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A4", "B5", "C6" });
+                rs.AddNew(new string[] { "A", "B", "C" }, new object[] { "A7", "B8", "C9" });
 
-                excel.Visible = true;
-
-                using (var workbook = excel.Workbooks.Add())
+                // Excel
+                using (var excel = Excel.Application.FromProcess(System.Diagnostics.Process.GetProcessesByName("EXCEL")[0]))
                 {
-                    using (var worksheet = workbook.ActiveSheet)
+                    if (excel == null)
                     {
-                        using (var range = worksheet.Cells)
-                        {
-                            range[1, 1].Value = "Test";
-                        }
-
-                        using (var range = worksheet.Range("A2"))
-                        {
-                            range.CopyFromRecordset(rs.InternalObject, null, null);
-                        }
-
-                        using (var range = worksheet.Range("D2:G10"))
-                        {
-                            Image img = Image.FromFile(@"c:\users\tdixon\pictures\grid1.png");
-
-                            //worksheet.Shapes.AddPicture(img, range, true, true).Dispose();
-
-                            /*using (var shape = worksheet.Shapes.AddPicture(@"c:\users\tdixon\pictures\grid1.png", false, true, range, true))
-                            {
-                                MessageBox.Show(shape.Name);
-                            }*/
-                        }
+                        MessageBox.Show("No existing running instance of Excel found.");
+                        return;
                     }
 
-                    workbook.Close();
-                }
+                    excel.Visible = true;
 
-                excel.Quit();
+                    using (var workbook = excel.Workbooks.Add())
+                    {
+                        using (var worksheet = workbook.ActiveSheet)
+                        {
+                            using (var range = worksheet.Cells)
+                            {
+                                range[1, 1].Value = "Test";
+                            }
+
+                            using (var range = worksheet.Range("A2"))
+                            {
+                                range.CopyFromRecordset(rs.InternalObject, null, null);
+                            }
+
+                            using (var range = worksheet.Range("D2:G10"))
+                            {
+                                Image img = Image.FromFile(@"c:\users\tdixon\pictures\grid1.png");
+
+                                //worksheet.Shapes.AddPicture(img, range, true, true).Dispose();
+
+                                /*using (var shape = worksheet.Shapes.AddPicture(@"c:\users\tdixon\pictures\grid1.png", false, true, range, true))
+                                {
+                                    MessageBox.Show(shape.Name);
+                                }*/
+                            }
+                        }
+
+                        workbook.Close();
+                    }
+
+                    excel.Quit();
+                }
             }
         }
 
@@ -527,7 +530,7 @@ namespace Tester
                         find.Execute(STC.Automation.Office.Word.Enums.Replace.One);
                     }
                 }
-                
+
 
                 /*foreach (Word.Document doc in word.Documents)
                 {
@@ -597,14 +600,14 @@ namespace Tester
                     return;
                 }
 
-                DataTable dt = new DataTable() ;
-                SqlDataAdapter da;
-                SqlCommand cmd = new SqlCommand("select * from viewRPT_DIER_ProposalBody where ProposalID = -613377248",cnn);
+                using (DataTable dt = new DataTable())
+                {
+                    using (SqlCommand cmd = new SqlCommand("select * from viewRPT_DIER_ProposalBody where ProposalID = -613377248", cnn))
+                    using (var da = new SqlDataAdapter(cmd))
+                        da.Fill(dt);
 
-                da = new SqlDataAdapter(cmd);
-                da.Fill(dt);
-
-                ADODB.Recordset rs = ADODB.Recordset.FromDataTable(dt);
+                    ADODB.Recordset rs = ADODB.Recordset.FromDataTable(dt);
+                }
             }
 
             //using (SqlConnection cnn = new SqlConnection("Server=lau-sql2005;Database=PRImateDB;Trusted_Connection=True;"))
@@ -777,7 +780,7 @@ namespace Tester
                                     r.ColumnWidth = 80;
                             }
                         }
-                       
+
                         //// sort the AutoFilter by data in column B
                         //using (var filter = worksheet.AutoFilter)
                         //{
@@ -865,7 +868,8 @@ namespace Tester
                 msg.Body = "This is the body of the email.";
                 msg.Importance = STC.Automation.Office.Outlook.Enums.Importance.High;
                 if (File.Exists(@"C:\test.txt"))
-                    using (var attachment = msg.Attachments.Add(@"C:\test.txt")) ;
+                    using (var attachment = msg.Attachments.Add(@"C:\test.txt"))
+                        ;
                 msg.Recipients.ResolveAll();
                 msg.Display();
                 msg.Save();
@@ -896,7 +900,9 @@ namespace Tester
             var apps = STC.Automation.Office.Outlook.Application.GetRunningApplications();
             MessageBox.Show("Existing Outlook instances: " + apps.Count.ToString() + "\n" + (apps.Count == 0 ? "A new window will be created." : ""));
             if (apps.Count == 0)
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposed in loop below...
                 apps.Add(new STC.Automation.Office.Outlook.Application());
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
             if (apps.Count > 0)
             {
@@ -980,7 +986,9 @@ namespace Tester
 
                     // first attachment is just added and the attachment object disposed
                     var root = Path.Combine(Path.GetTempPath(), "STC.Automation.Office");
-                    try { Directory.CreateDirectory(root); } catch { }
+                    try
+                    { Directory.CreateDirectory(root); }
+                    catch { }
                     var filename = Path.Combine(root, "attached-image.jpg");
                     using (var writer = new FileStream(filename, FileMode.Create))
                         Properties.Resources.attached_image.Save(writer, System.Drawing.Imaging.ImageFormat.Jpeg);

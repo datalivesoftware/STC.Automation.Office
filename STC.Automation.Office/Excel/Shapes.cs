@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using STC.Automation.Office.Common;
+﻿using System.Drawing;
 using System.IO;
-using System.Drawing;
-using System.Windows.Forms;
 using STC.Automation.Office.Attributes;
+using STC.Automation.Office.Common;
 
 namespace STC.Automation.Office.Excel
 {
