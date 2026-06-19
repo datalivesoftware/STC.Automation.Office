@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net481</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <AssemblyTitle>STC.Automation.Office</AssemblyTitle>
     <Product>STC.Automation.Office</Product>
     <Configurations>Debug;Release</Configurations>
